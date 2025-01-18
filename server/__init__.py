@@ -1,4 +1,6 @@
 from ayon_server.addons import BaseServerAddon
+from .settings import UnrealSettings
 
 class AyonHalonUnreal(BaseServerAddon):
-    pass
+    settings_model = UnrealSettings
+
