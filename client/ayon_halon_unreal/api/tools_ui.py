@@ -104,6 +104,7 @@ class ToolsDialog(QtWidgets.QDialog):
             self._first_show = False
 
     def _on_tool_require(self, tool_name):
+        print(f"on tool require: {self}, {tool_name}")
         host_tools.show_tool_by_name(tool_name, parent=self)
 
 

@@ -45,9 +45,7 @@ logger = logging.getLogger("ayon_core.hosts.unreal")
 AYON_CONTAINERS = "AyonContainers"
 AYON_ASSET_DIR = f"/Ayon"
 CONTEXT_CONTAINER = "Ayon/context.json"
-UNREAL_VERSION = semver.VersionInfo(
-    *os.getenv("AYON_UNREAL_VERSION").split(".")
-)
+UNREAL_VERSION = None
 
 AYON_PROJECT_NAME = anatomy.Anatomy().project_name
 UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)['ayon_halon_unreal']
@@ -171,57 +169,50 @@ def uninstall():
 
 
 
+def get_container_class_name():
+    return "DefaultDataAsset"
 
-def get_json_value(input_file, field_name = "asset_name"):
-    data = None
-    with open(input_file, "r") as file:
-        data = json.load(file)
-    if data:
-        if field_name in data:
-            value = data[field_name]
-            # print(f"The cache value for '{field_name}' is: {value}")
-            return value
-        else:
-            print(f"Key '{field_name}' not found in the JSON data.")
-            return None
-    else:
-        return None
+def get_container_class_path():
+    return f"/NewAyon/{get_container_class_name()}"
 
 
-
+## Directory does not exist: D:/p4/Test_Project/unreal/Plugins///Plugins/Halon/Internal/NewAyon/Content//ImportedDataAssets
 def ls():
     print(f"////////////////////////////// Listing all Ayon Containers... //////////////////////////////")
-    json_files = []
+    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{get_container_class_name()}_C")
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
     search_dir = f"{unreal.Paths.project_plugins_dir()}/{IMPORT_STORAGE_PATH}/{CONTENT_STORAGE_PATH}"
-    if not os.path.exists(search_dir):
-        print(f"Directory does not exist: {search_dir}")
-        return
-    for root, _, files in os.walk(search_dir):
-        for file in files:
-            if file.endswith('.json'):
-                json_files.append(os.path.join(root, file))
+    print(f"Search Dir: {search_dir}")
+    ayon_containers = ar.get_assets_by_class(get_container_class_name(), True)
 
-    print(f"Total Json Containers found: {len(json_files)}")
-    for container in json_files:
-        data = get_json_value(container, "asset_name")
+    # get_asset_by_class returns AssetData. To get all metadata we need to
+    # load asset. get_tag_values() work only on metadata registered in
+    # Asset Registry Project settings (and there is no way to set it with
+    # python short of editing ini configuration file).
+    for asset_data in ayon_containers:
+        asset = asset_data.get_asset()
+        data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+        data["objectName"] = asset_data.asset_name
         yield cast_map_to_str_dict(data)
+
 
 
 def ls_inst():
     print(f"////////////////////////////// Listing all Ayon Instances... //////////////////////////////")
-    json_files = []
+    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{get_container_class_name()}_C")
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
     search_dir = f"{unreal.Paths.project_plugins_dir()}/{IMPORT_STORAGE_PATH}/{CONTENT_STORAGE_PATH}"
-    if not os.path.exists(search_dir):
-        print(f"Directory does not exist: {search_dir}")
-        return
-    for root, _, files in os.walk(search_dir):
-        for file in files:
-            if file.endswith('.json'):
-                json_files.append(os.path.join(root, file))
+    print(f"Search Dir: {search_dir}")
+    ayon_instances = ar.get_assets_by_class(get_container_class_name(), True)
 
-    print(f"Total Json Instances found: {len(json_files)}")
-    for instance in json_files:
-        data = get_json_value(instance, "asset_name")
+    # get_asset_by_class returns AssetData. To get all metadata we need to
+    # load asset. get_tag_values() work only on metadata registered in
+    # Asset Registry Project settings (and there is no way to set it with
+    # python short of editing ini configuration file).
+    for asset_data in instances:
+        asset = asset_data.get_asset()
+        data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+        data["objectName"] = asset_data.asset_name
         yield cast_map_to_str_dict(data)
 
 
