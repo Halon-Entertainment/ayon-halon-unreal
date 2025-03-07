@@ -175,15 +175,23 @@ def get_container_class_name():
 def get_container_class_path():
     return f"/NewAyon/{get_container_class_name()}"
 
+def get_loaded_container_class():
+    return unreal.load_class(None, f"{get_container_class_path()}.{get_container_class_name()}_C")
+
+def get_loaded_containers():
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    unreal.TopLevelAssetPath()
+    containers = ar.get_assets_by_class(f"{get_loaded_container_class().get_name()}", True)
+    return containers
+
+
 
 ## Directory does not exist: D:/p4/Test_Project/unreal/Plugins///Plugins/Halon/Internal/NewAyon/Content//ImportedDataAssets
 def ls():
     print(f"////////////////////////////// Listing all Ayon Containers... //////////////////////////////")
-    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{get_container_class_name()}_C")
-    ar = unreal.AssetRegistryHelpers.get_asset_registry()
     search_dir = f"{unreal.Paths.project_plugins_dir()}/{IMPORT_STORAGE_PATH}/{CONTENT_STORAGE_PATH}"
     print(f"Search Dir: {search_dir}")
-    ayon_containers = ar.get_assets_by_class(get_container_class_name(), True)
+    ayon_containers = get_loaded_containers()
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
     # load asset. get_tag_values() work only on metadata registered in
@@ -199,11 +207,9 @@ def ls():
 
 def ls_inst():
     print(f"////////////////////////////// Listing all Ayon Instances... //////////////////////////////")
-    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{get_container_class_name()}_C")
-    ar = unreal.AssetRegistryHelpers.get_asset_registry()
     search_dir = f"{unreal.Paths.project_plugins_dir()}/{IMPORT_STORAGE_PATH}/{CONTENT_STORAGE_PATH}"
     print(f"Search Dir: {search_dir}")
-    ayon_instances = ar.get_assets_by_class(get_container_class_name(), True)
+    ayon_containers = get_loaded_containers()
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
     # load asset. get_tag_values() work only on metadata registered in
