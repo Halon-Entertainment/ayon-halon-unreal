@@ -174,7 +174,7 @@ def uninstall():
 
 
 def get_container_class_path():
-    return f"/{PLUGIN_NAME}/Content/{AYON_CONTAINER_NAME}"
+    return f"/{PLUGIN_NAME}/{AYON_CONTAINER_NAME}"
 
 def get_loaded_container_class():
     return unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
