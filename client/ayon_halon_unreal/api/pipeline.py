@@ -50,9 +50,13 @@ UNREAL_VERSION = None
 AYON_PROJECT_NAME = anatomy.Anatomy().project_name
 UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)['ayon_halon_unreal']
 ALL_AYON_SETTINGS = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)
-IMPORT_STORAGE_PATH = UNREAL_PROJECT_CONFIG["plugin_folder"]
-CONTENT_STORAGE_PATH = UNREAL_PROJECT_CONFIG["ayon_storage_paths"]
-print(f"Base Plugin Directory: {IMPORT_STORAGE_PATH}")
+PLUGIN_NAME = UNREAL_PROJECT_CONFIG["plugin_name"]
+AYON_CONTAINER_NAME = UNREAL_PROJECT_CONFIG["data_asset_name"]
+CONTENT_STORAGE_ROOT = UNREAL_PROJECT_CONFIG["content_storage_root"]
+CONTENT_STORAGE_PATH = UNREAL_PROJECT_CONFIG["content_storage_path"]
+print(f"Plugin Name: {PLUGIN_NAME}")
+print(f"Content Import Directory: {CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}")
+
 
 PLUGINS_DIR = os.path.join(UNREAL_ADDON_ROOT, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -169,28 +173,26 @@ def uninstall():
 
 
 
-def get_container_class_name():
-    return "DefaultDataAsset"
-
 def get_container_class_path():
-    return f"/NewAyon/{get_container_class_name()}"
+    return f"/{PLUGIN_NAME}/Content/{AYON_CONTAINER_NAME}"
 
 def get_loaded_container_class():
-    return unreal.load_class(None, f"{get_container_class_path()}.{get_container_class_name()}_C")
+    return unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
 
 def get_loaded_containers():
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    unreal.TopLevelAssetPath()
-    containers = ar.get_assets_by_class(f"{get_loaded_container_class().get_name()}", True)
+    container_class = get_loaded_container_class()
+    class_path = unreal.TopLevelAssetPath(container_class.get_path_name())
+    containers = ar.get_assets_by_class(class_path, True)
+    print(f"Container class: {container_class.get_path_name()}")
+    print(f"Found containers: {len(containers)}")
     return containers
 
 
 
-## Directory does not exist: D:/p4/Test_Project/unreal/Plugins///Plugins/Halon/Internal/NewAyon/Content//ImportedDataAssets
 def ls():
-    print(f"////////////////////////////// Listing all Ayon Containers... //////////////////////////////")
-    search_dir = f"{unreal.Paths.project_plugins_dir()}/{IMPORT_STORAGE_PATH}/{CONTENT_STORAGE_PATH}"
-    print(f"Search Dir: {search_dir}")
+    search_dir = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}"
+    print(f"Container Search Dir: {search_dir}")
     ayon_containers = get_loaded_containers()
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
@@ -206,9 +208,8 @@ def ls():
 
 
 def ls_inst():
-    print(f"////////////////////////////// Listing all Ayon Instances... //////////////////////////////")
-    search_dir = f"{unreal.Paths.project_plugins_dir()}/{IMPORT_STORAGE_PATH}/{CONTENT_STORAGE_PATH}"
-    print(f"Search Dir: {search_dir}")
+    search_dir = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}"
+    print(f"Instance Search Dir: {search_dir}")
     ayon_containers = get_loaded_containers()
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
@@ -249,10 +250,10 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     """
     # 1 - create directory for container
     container_name = f"{name}{suffix}"
-    new_name = move_assets_to_path(IMPORT_STORAGE_PATH, container_name, nodes)
+    new_name = move_assets_to_path(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}", container_name, nodes)
 
     # 2 - create Asset Container there
-    path = f"{IMPORT_STORAGE_PATH}/{new_name}"
+    path = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{new_name}"
     create_container(container=container_name, path=path)
 
     namespace = path
@@ -446,11 +447,16 @@ def create_container(container: str, path: str) -> unreal.Object:
         )
 
     """
+    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
     print(f"Creating Ayon Container {container}")
-    factory = unreal.AyonAssetContainerFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
-    return tools.create_asset(container, path, None, factory)
+    return tools.create_asset(
+        asset_name=container,
+        package_path=f"/{path}",
+        asset_class=data_asset_class,
+        factory=unreal.DataAssetFactory()
+    )
 
 
 def create_publish_instance(instance: str, path: str) -> unreal.Object:
@@ -474,9 +480,16 @@ def create_publish_instance(instance: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.AyonPublishInstanceFactory()
+    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
+    print(f"Creating Ayon Container {container}")
     tools = unreal.AssetToolsHelpers().get_asset_tools()
-    return tools.create_asset(instance, path, None, factory)
+
+    return tools.create_asset(
+        asset_name=container,
+        package_path=f"/{path}",
+        asset_class=data_asset_class,
+        factory=unreal.DataAssetFactory()
+    )
 
 
 def cast_map_to_str_dict(umap) -> dict:
@@ -602,7 +615,7 @@ def generate_sequence(h, h_dir):
     )
 
     project_name = get_current_project_name()
-    filtered_dir = f"{IMPORT_STORAGE_PATH}/"
+    filtered_dir = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/"
     folder_path = h_dir.replace(filtered_dir, "")
     folder_entity = ayon_api.get_folder_by_path(
         project_name,
@@ -863,7 +876,7 @@ def format_asset_directory(context, directory_template):
         data["version"]["version"] = f"v{version:03d}"
     asset_name_with_version = set_asset_name(data)
     asset_dir = StringTemplate(directory_template).format_strict(data)
-    return f"{IMPORT_STORAGE_PATH}/{asset_dir}", asset_name_with_version
+    return f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{asset_dir}", asset_name_with_version
 
 
 def set_asset_name(data):
@@ -1017,7 +1030,7 @@ def has_asset_existing_directory(asset_name, asset_dir):
         str: package path
     """
     asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
-    all_assets = asset_registry.get_assets_by_path('/Game', recursive=True)
+    all_assets = asset_registry.get_assets_by_path(f'{CONTENT_STORAGE_ROOT}', recursive=True)
     for game_asset in all_assets:
         if game_asset.asset_name == asset_name:
             asset_path = game_asset.get_asset().get_path_name()
@@ -1058,7 +1071,7 @@ def get_top_hierarchy_folder(path):
         str: top hierarchy directory
     """
     # Split the path by the directory separator '/'
-    path = path.replace(f"{IMPORT_STORAGE_PATH}/", "")
+    path = path.replace(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/", "")
     # Return the first part
     parts = [part for part in path.split('/') if part]
     return parts[0]
@@ -1066,7 +1079,7 @@ def get_top_hierarchy_folder(path):
 
 def generate_hierarchy_path(name, folder_name, asset_root, master_dir_name, suffix=""):
     asset_name = f"{folder_name}_{name}" if folder_name else name
-    hierarchy_dir = f"{IMPORT_STORAGE_PATH}/{master_dir_name}"
+    hierarchy_dir = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{master_dir_name}"
     tools = unreal.AssetToolsHelpers().get_asset_tools()
     asset_dir, container_name = tools.create_unique_asset_name(asset_root, suffix=suffix)
     suffix = "_CON"
@@ -1081,8 +1094,8 @@ def remove_map_and_sequence(container):
     asset_dir = container.get('namespace')
     # Create a temporary level to delete the layout level.
     unreal.EditorLevelLibrary.save_all_dirty_levels()
-    unreal.EditorAssetLibrary.make_directory(f"{IMPORT_STORAGE_PATH}/tmp")
-    tmp_level = f"{IMPORT_STORAGE_PATH}/tmp/temp_map"
+    unreal.EditorAssetLibrary.make_directory(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp")
+    tmp_level = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp/temp_map"
     if not unreal.EditorAssetLibrary.does_asset_exist(f"{tmp_level}.temp_map"):
         unreal.EditorLevelLibrary.new_level(tmp_level)
     else:
@@ -1094,7 +1107,7 @@ def remove_map_and_sequence(container):
     # Load the default level
     default_level_path = "/Engine/Maps/Templates/OpenWorld"
     unreal.EditorLevelLibrary.load_level(default_level_path)
-    unreal.EditorAssetLibrary.delete_directory(f"{IMPORT_STORAGE_PATH}/tmp")
+    unreal.EditorAssetLibrary.delete_directory(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp")
 
 
 def update_container(container, repre_entity, loaded_assets=None):
