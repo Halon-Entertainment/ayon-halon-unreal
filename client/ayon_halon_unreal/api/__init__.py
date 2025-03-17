@@ -27,6 +27,10 @@ from .pipeline import (
     maintained_selection
 )
 
+from . import create_data_asset
+from . import menu
+from . import paths
+
 __all__ = [
     "UnrealActorCreator",
     "UnrealAssetCreator",
@@ -47,5 +51,8 @@ __all__ = [
     "UnrealHost",
     "set_sequence_hierarchy",
     "generate_sequence",
-    "maintained_selection"
+    "maintained_selection",
+    "create_data_asset",
+    "menu",
+    "paths"
 ]

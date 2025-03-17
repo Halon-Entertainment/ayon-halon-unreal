@@ -50,11 +50,9 @@ UNREAL_VERSION = None
 AYON_PROJECT_NAME = anatomy.Anatomy().project_name
 UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)['ayon_halon_unreal']
 ALL_AYON_SETTINGS = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)
-PLUGIN_NAME = UNREAL_PROJECT_CONFIG["plugin_name"]
 AYON_CONTAINER_NAME = UNREAL_PROJECT_CONFIG["data_asset_name"]
 CONTENT_STORAGE_ROOT = UNREAL_PROJECT_CONFIG["content_storage_root"]
 CONTENT_STORAGE_PATH = UNREAL_PROJECT_CONFIG["content_storage_path"]
-print(f"Plugin Name: {PLUGIN_NAME}")
 print(f"Content Import Directory: {CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}")
 
 
@@ -75,6 +73,7 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
     name = "unreal"
 
     def install(self):
+        self.log.debug("Installing Unreal Host")
         install()
 
     def get_containers(self):
@@ -174,7 +173,7 @@ def uninstall():
 
 
 def get_container_class_path():
-    return f"/{PLUGIN_NAME}/{AYON_CONTAINER_NAME}"
+    return f"/bob/guy"
 
 def get_loaded_container_class():
     return unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")

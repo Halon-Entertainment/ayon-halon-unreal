@@ -1,9 +1,13 @@
 import os
-from ayon_core.addon import AYONAddon, IHostAddon
+import pathlib
 import time
+
+from ayon_core.addon import AYONAddon, IHostAddon
+
 from .version import __version__
 
 UNREAL_ADDON_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 
 class AyonHalonUnreal(AYONAddon, IHostAddon):
     name = "unreal"
@@ -20,19 +24,30 @@ class AyonHalonUnreal(AYONAddon, IHostAddon):
 
     def initialize(self, settings):
         print(f"Initializing Ayon Halon Unreal Addon...")
-        return super().initialize(settings)
+        env = os.environ
+        env.update(
+            {
+                "UE_PYTHONPATH": os.environ.get("PYTHONPATH", "")
+                + os.pathsep
+                + (pathlib.Path(UNREAL_ADDON_ROOT) / "startup").as_posix(),
+                "AYON_LOG_NO_COLORS": "1",
+            }
+        )
+        env["ENV_SET"] = "True"
+        os.environ.update(env)
+        pass
 
     def get_global_environments(self):
         return {
             "AYON_UNREAL_ROOT": UNREAL_ADDON_ROOT,
         }
 
-    def get_global_environments(self):
-        return {
-            "UNREAL_ADDON_ROOT": UNREAL_ADDON_ROOT,
-        }
-
     def get_launch_hook_paths(self, app):
-        return [
-            os.path.join(UNREAL_ADDON_ROOT, "hooks")
-        ]
+        return [os.path.join(UNREAL_ADDON_ROOT, "hooks")]
+
+    def add_implementation_envs(self, env, app):
+        env = {
+            "UE_PYTHONPATH": os.environ.get("PYTHONPATH", ""),
+            "AYON_LOG_NO_COLORS": "1",
+        }
+        env["ENV_SET"] = "True"

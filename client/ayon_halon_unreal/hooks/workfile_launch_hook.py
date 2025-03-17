@@ -36,8 +36,6 @@ class UnrealPrelaunchHook(PreLaunchHook):
         project_entity = self.data["project_entity"]
 
 
-
-
     def execute(self):
         """Hook entry method."""
         project_settings = self.data["project_settings"]
@@ -47,4 +45,11 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         workdir = self.launch_context.env["AYON_WORKDIR"]
         executable = str(self.launch_context.executable)
-        print(f"Launching Unreal, Workdir: {workdir}, Exec: {executable}")
+        self.log.debug(f"Launching Unreal, Workdir: {workdir}, Exec: {executable}")
+
+        project_file_path = 'D:/p4/Test_Project/unreal/testproject.uproject'
+
+        self.launch_context.launch_args.append(
+            f"\"{project_file_path}\""
+        )
+        self.log.debug(f"{self.launch_context.executable} {self.launch_context.launch_args[0]}")
