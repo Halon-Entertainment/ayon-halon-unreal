@@ -6,8 +6,9 @@ from dataclasses import dataclass
 @dataclass
 class AyonMetaDataInfo:
 
+    plugin_name: str = "NewAyon"
     dataclass_parent: str = "DefaultDataAsset"
-    base_path: str = f"/Game/{dataclass_parent}"
+    base_path: str = f"/{plugin_name}/{dataclass_parent}"
     import_dir: str = "/Game/ImportedData"
     custom_dataclass: str = "CustomDataAsset"
     custom_dataclass_dir: str = f"{base_path}.{custom_dataclass}_C"
