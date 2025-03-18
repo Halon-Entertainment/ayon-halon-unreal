@@ -64,12 +64,12 @@ create_data_asset.create_child_data("Some_Asset")
 
 def create_the_bp():
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-    asset = menu.CustomDataAsset()
+
     # Define Blueprint path and name
     blueprint_name = "DataAssetClassThingy"
-    package_path = "/Game/ImportedData"
-    asset_class = unreal.Actor
-    blueprint_factory = unreal.BlueprintFactory()
+    package_path = "/Game"
+    asset_class = unreal.PrimaryDataAsset
+    blueprint_factory = unreal.DataAssetFactory()
     new_blueprint = asset_tools.create_asset(
         blueprint_name, package_path, asset_class, blueprint_factory
     )
@@ -108,5 +108,5 @@ from importlib import reload
 from ayon_halon_unreal.api import create_data_asset
 
 reload(create_data_asset)
-# create_data_asset.create_the_bp()
+create_data_asset.create_the_bp()
 create_child_data()
