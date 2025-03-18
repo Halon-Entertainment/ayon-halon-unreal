@@ -1,4 +1,5 @@
 from ayon_server.settings import BaseSettingsModel, SettingsField
+from .import_settings import UnrealImportModel, UnrealInterchangeModel
 
 
 class UnrealSettings(BaseSettingsModel):
@@ -26,6 +27,11 @@ class UnrealSettings(BaseSettingsModel):
         "FnBrCine_CommonAssets",
         title="AYON Content Folder",
         description="Folder name or path within storage where we store all assets, Ayon folder"
+    )
+
+    import_settings: UnrealImportModel = SettingsField(
+        default_factory=UnrealImportModel,
+        title="Import settings"
     )
 
 
