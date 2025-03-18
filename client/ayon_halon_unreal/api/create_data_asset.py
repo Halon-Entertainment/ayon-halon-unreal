@@ -96,17 +96,10 @@ def create_primary_data_asset(child_asset_name="Derp"):
         unreal.PrimaryDataAsset,  # Class type
         unreal.DataAssetFactory(),  # Generic factory (use a specific one if needed)
     )
-    return
+    unreal.EditorAssetLibrary.save_asset(data_asset)
 
     data_asset_class = unreal.load_class(
         None, f"{AyonMetaDataInfo.custom_dataclass_dir}.{AyonMetaDataInfo.custom_dataclass}"
     )
     return
 
-
-from importlib import reload
-from ayon_halon_unreal.api import create_data_asset
-
-reload(create_data_asset)
-create_data_asset.create_the_bp()
-create_child_data()
