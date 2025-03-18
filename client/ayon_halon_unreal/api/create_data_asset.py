@@ -61,6 +61,9 @@ reload(create_data_asset)
 create_data_asset.create_child_data("Some_Asset")
 """
 
+def create_attribute(new_blueprint, attribute: str = "test_variable", type: str = "string"):
+    new_blueprint.add_member_variable(new_blueprint, attribute, unreal.StrProperty)
+
 
 def create_the_bp():
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
@@ -68,12 +71,23 @@ def create_the_bp():
     # Define Blueprint path and name
     blueprint_name = "DataAssetClassThingy"
     package_path = "/Game"
-    asset_class = unreal.PrimaryDataAsset
-    blueprint_factory = unreal.DataAssetFactory()
+    blue_print_factory = unreal.BlueprintFactory()
+    blue_print_factory.set_editor_property("ParentClass", unreal.PrimaryDataAsset)
+
     new_blueprint = asset_tools.create_asset(
-        blueprint_name, package_path, asset_class, blueprint_factory
+        blueprint_name, package_path, None, blue_print_factory
     )
-    return
+
+    unreal.EditorAssetLibrary.save_loaded_asset(new_blueprint)
+
+    return new_blueprint
+
+    # asset_class = unreal.PrimaryDataAsset
+    # blueprint_factory = unreal.DataAssetFactory()
+    # new_blueprint = asset_tools.create_asset(
+    #     blueprint_name, package_path, asset_class, blueprint_factory
+    # )
+    # return
 
 
 """
@@ -108,5 +122,5 @@ from importlib import reload
 from ayon_halon_unreal.api import create_data_asset
 
 reload(create_data_asset)
-create_data_asset.create_the_bp()
+create_data_asset.create_attribute(create_the_bp())
 create_child_data()
