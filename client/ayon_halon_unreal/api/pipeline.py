@@ -45,7 +45,6 @@ UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(
     AYON_PROJECT_NAME
 )["ayon_halon_unreal"]
 ALL_AYON_SETTINGS = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)
-PLUGIN_NAME = UNREAL_PROJECT_CONFIG["plugin_name"]
 AYON_CONTAINER_NAME = UNREAL_PROJECT_CONFIG["data_asset_name"]
 CONTENT_STORAGE_ROOT = UNREAL_PROJECT_CONFIG["content_storage_root"]
 CONTENT_STORAGE_PATH = UNREAL_PROJECT_CONFIG["content_storage_path"]

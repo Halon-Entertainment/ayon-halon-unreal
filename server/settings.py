@@ -8,10 +8,11 @@ class UnrealSettings(BaseSettingsModel):
         title="Enabled",
         scope=['studio', 'project']
     )
-    plugin_name: str = SettingsField(
-        "NewAyon",
-        title="AYON Plugin Name",
-        description="Root of the Directory where primary data asset is stored, Plugin or Game"
+    uproject_file_path: str = SettingsField(
+        "{root[work]}/unreal/{project[name].uproject",
+        scope=['studio', 'project'],
+        title="UProject File Path",
+        description="Templated file path to find the uproject file at launch."
     )
     data_asset_name: str = SettingsField(
         "DefaultDataAsset",
@@ -24,7 +25,7 @@ class UnrealSettings(BaseSettingsModel):
         description="Root to prepend onto storage name to build the asset paths, typically /Game"
     )
     content_storage_path: str = SettingsField(
-        "FnBrCine_CommonAssets",
+        "Halon",
         title="AYON Content Folder",
         description="Folder name or path within storage where we store all assets, Ayon folder"
     )

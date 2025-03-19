@@ -29,7 +29,6 @@ from .pipeline import (
 
 from . import create_data_asset
 from . import menu
-from . import paths
 
 __all__ = [
     "UnrealActorCreator",
@@ -54,5 +53,4 @@ __all__ = [
     "maintained_selection",
     "create_data_asset",
     "menu",
-    "paths"
 ]
