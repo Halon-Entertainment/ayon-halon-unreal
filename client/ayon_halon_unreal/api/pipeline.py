@@ -1,42 +1,35 @@
 # -*- coding: utf-8 -*-
+import copy
+import json
+import logging
 import os
 import re
-import json
-import clique
-import copy
-import logging
-from typing import List, Any
-from contextlib import contextmanager
 import time
+from contextlib import contextmanager
+from typing import Any, List
 
-import semver
-import pyblish.api
 import ayon_api
-
-from ayon_core.pipeline import (
-    register_loader_plugin_path,
-    register_creator_plugin_path,
-    register_inventory_action_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
-    deregister_inventory_action_path,
-    AYON_CONTAINER_ID,
-    get_current_project_name,
-    anatomy,
-    context_tools
-)
-
-from ayon_core.addon import AddonsManager
-from ayon_core.lib import StringTemplate
-from ayon_core.pipeline.context_tools import (
-    get_current_folder_entity
-)
-from ayon_core.tools.utils import host_tools
-from ayon_core.host import HostBase, ILoadHost, IPublishHost
-from ayon_halon_unreal import UNREAL_ADDON_ROOT
-
+import clique
+import pyblish.api
+import semver
 import unreal  # noqa
+from ayon_core.addon import AddonsManager
+from ayon_core.host import HostBase, ILoadHost, IPublishHost
+from ayon_core.lib import StringTemplate
+from ayon_core.pipeline import (AYON_CONTAINER_ID, anatomy, context_tools,
+                                deregister_creator_plugin_path,
+                                deregister_inventory_action_path,
+                                deregister_loader_plugin_path,
+                                get_current_project_name,
+                                register_creator_plugin_path,
+                                register_inventory_action_path,
+                                register_loader_plugin_path)
+from ayon_core.pipeline.context_tools import get_current_folder_entity
+from ayon_core.settings.lib import get_current_project_settings
+from ayon_core.tools.utils import host_tools
 
+from ayon_halon_unreal import UNREAL_ADDON_ROOT
+from ayon_halon_unreal.api.create_data_asset import AyonMetaData
 
 # Rename to Ayon once parent module renames
 logger = logging.getLogger("ayon_core.hosts.unreal")
@@ -48,13 +41,17 @@ CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = None
 
 AYON_PROJECT_NAME = anatomy.Anatomy().project_name
-UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)['ayon_halon_unreal']
+UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(
+    AYON_PROJECT_NAME
+)["ayon_halon_unreal"]
 ALL_AYON_SETTINGS = ayon_api.get_addons_project_settings(AYON_PROJECT_NAME)
 PLUGIN_NAME = UNREAL_PROJECT_CONFIG["plugin_name"]
 AYON_CONTAINER_NAME = UNREAL_PROJECT_CONFIG["data_asset_name"]
 CONTENT_STORAGE_ROOT = UNREAL_PROJECT_CONFIG["content_storage_root"]
 CONTENT_STORAGE_PATH = UNREAL_PROJECT_CONFIG["content_storage_path"]
-print(f"Content Import Directory: {CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}")
+print(
+    f"Content Import Directory: {CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}"
+)
 
 
 PLUGINS_DIR = os.path.join(UNREAL_ADDON_ROOT, "plugins")
@@ -111,7 +108,8 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
             except IOError as e:
                 if i == attempts - 1:
                     raise Exception(
-                        "Failed to write context data. Aborting.") from e
+                        "Failed to write context data. Aborting."
+                    ) from e
                 unreal.log_warning("Failed to write context data. Retrying...")
                 i += 1
                 time.sleep(3)
@@ -131,7 +129,7 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
 def install():
     """Install Unreal configuration for AYON."""
     print("-=" * 40)
-    logo = '''.
+    logo = """.
 .
                     ·
                     │
@@ -152,7 +150,7 @@ def install():
          ·-─═─-∙ A Y O N ∙-─═─-·
                 by  YNPUT
 .
-'''
+"""
     print(logo)
     print("installing Ayon for Unreal ...")
     print("-=" * 40)
@@ -172,12 +170,22 @@ def uninstall():
     deregister_inventory_action_path(str(INVENTORY_PATH))
 
 
-
 def get_container_class_path():
-    return f"/{PLUGIN_NAME}/{AYON_CONTAINER_NAME}"
+    data = get_current_project_settings()
+    meta_data_asset_location = data.get("ayon_halon_unreal", {}).get(
+        "meta_data_asset_location", None
+    )
+    meta_data = AyonMetaData()
+    if meta_data_asset_location:
+        meta_data.set_base_path(meta_data_asset_location)
+    return f"{meta_data.base_path}/{meta_data.asset_name}"
+
 
 def get_loaded_container_class():
-    return unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
+    return unreal.load_class(
+        None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C"
+    )
+
 
 def get_loaded_containers():
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -187,7 +195,6 @@ def get_loaded_containers():
     print(f"Container class: {container_class.get_path_name()}")
     print(f"Found containers: {len(containers)}")
     return containers
-
 
 
 def ls():
@@ -204,7 +211,6 @@ def ls():
         data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
         data["objectName"] = asset_data.asset_name
         yield cast_map_to_str_dict(data)
-
 
 
 def ls_inst():
@@ -250,7 +256,9 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     """
     # 1 - create directory for container
     container_name = f"{name}{suffix}"
-    new_name = move_assets_to_path(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}", container_name, nodes)
+    new_name = move_assets_to_path(
+        f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}", container_name, nodes
+    )
 
     # 2 - create Asset Container there
     path = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{new_name}"
@@ -337,6 +345,7 @@ def show_tools_dialog():
     Dialog will stay visible.
     """
     from ayon_halon_unreal.api import tools_ui
+
     tools_ui.show_tools_dialog()
 
 
@@ -447,7 +456,9 @@ def create_container(container: str, path: str) -> unreal.Object:
         )
 
     """
-    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
+    data_asset_class = unreal.load_class(
+        None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C"
+    )
     print(f"Creating Ayon Container {container}")
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
@@ -455,7 +466,7 @@ def create_container(container: str, path: str) -> unreal.Object:
         asset_name=container,
         package_path=f"/{path}",
         asset_class=data_asset_class,
-        factory=unreal.DataAssetFactory()
+        factory=unreal.DataAssetFactory(),
     )
 
 
@@ -480,7 +491,9 @@ def create_publish_instance(instance: str, path: str) -> unreal.Object:
         )
 
     """
-    data_asset_class = unreal.load_class(None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C")
+    data_asset_class = unreal.load_class(
+        None, f"{get_container_class_path()}.{AYON_CONTAINER_NAME}_C"
+    )
     print(f"Creating Ayon Container {container}")
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
@@ -488,7 +501,7 @@ def create_publish_instance(instance: str, path: str) -> unreal.Object:
         asset_name=container,
         package_path=f"/{path}",
         asset_class=data_asset_class,
-        factory=unreal.DataAssetFactory()
+        factory=unreal.DataAssetFactory(),
     )
 
 
@@ -543,29 +556,30 @@ def set_sequence_hierarchy(
     for t in tracks:
         if t.get_class() == unreal.MovieSceneSubTrack.static_class():
             subscene_track = t
-        if (t.get_class() ==
-                unreal.MovieSceneLevelVisibilityTrack.static_class()):
+        if (
+            t.get_class()
+            == unreal.MovieSceneLevelVisibilityTrack.static_class()
+        ):
             visibility_track = t
     if not subscene_track:
         subscene_track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
     if not visibility_track:
         visibility_track = seq_i.add_master_track(
-            unreal.MovieSceneLevelVisibilityTrack)
+            unreal.MovieSceneLevelVisibilityTrack
+        )
 
     # Create the sub-scene section
     subscenes = subscene_track.get_sections()
     subscene = None
     for s in subscenes:
-        if s.get_editor_property('sub_sequence') == seq_j:
+        if s.get_editor_property("sub_sequence") == seq_j:
             subscene = s
             break
     if not subscene:
         subscene = subscene_track.add_section()
         subscene.set_row_index(len(subscene_track.get_sections()))
-        subscene.set_editor_property('sub_sequence', seq_j)
-        subscene.set_range(
-            min_frame_j,
-            max_frame_j + 1)
+        subscene.set_editor_property("sub_sequence", seq_j)
+        subscene.set_range(min_frame_j, max_frame_j + 1)
 
     # Create the visibility section
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -579,26 +593,20 @@ def set_sequence_hierarchy(
     vis_section = visibility_track.add_section()
     index = len(visibility_track.get_sections())
 
-    vis_section.set_range(
-        min_frame_j,
-        max_frame_j + 1)
+    vis_section.set_range(min_frame_j, max_frame_j + 1)
     vis_section.set_visibility(unreal.LevelVisibility.VISIBLE)
     vis_section.set_row_index(index)
     vis_section.set_level_names(maps)
 
     if min_frame_j > 1:
         hid_section = visibility_track.add_section()
-        hid_section.set_range(
-            1,
-            min_frame_j)
+        hid_section.set_range(1, min_frame_j)
         hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
         hid_section.set_row_index(index)
         hid_section.set_level_names(maps)
     if max_frame_j < max_frame_i:
         hid_section = visibility_track.add_section()
-        hid_section.set_range(
-            max_frame_j + 1,
-            max_frame_i + 1)
+        hid_section.set_range(max_frame_j + 1, max_frame_i + 1)
         hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
         hid_section.set_row_index(index)
         hid_section.set_level_names(maps)
@@ -611,7 +619,7 @@ def generate_sequence(h, h_dir):
         asset_name=h,
         package_path=h_dir,
         asset_class=unreal.LevelSequence,
-        factory=unreal.LevelSequenceFactoryNew()
+        factory=unreal.LevelSequenceFactoryNew(),
     )
 
     project_name = get_current_project_name()
@@ -620,12 +628,7 @@ def generate_sequence(h, h_dir):
     folder_entity = ayon_api.get_folder_by_path(
         project_name,
         folder_path,
-        fields={
-            "id",
-            "attrib.fps",
-            "attrib.clipIn",
-            "attrib.clipOut"
-        }
+        fields={"id", "attrib.fps", "attrib.clipIn", "attrib.clipOut"},
     )
     # unreal default frame range value
     fps = 60.0
@@ -640,8 +643,7 @@ def generate_sequence(h, h_dir):
             "Folder Entity not found. Using default Unreal frame range value."
         )
 
-    sequence.set_display_rate(
-        unreal.FrameRate(fps, 1.0))
+    sequence.set_display_rate(unreal.FrameRate(fps, 1.0))
     sequence.set_playback_start(min_frame)
     sequence.set_playback_end(max_frame)
 
@@ -653,13 +655,11 @@ def generate_sequence(h, h_dir):
     tracks = sequence.get_master_tracks()
     track = None
     for t in tracks:
-        if (t.get_class() ==
-                unreal.MovieSceneCameraCutTrack.static_class()):
+        if t.get_class() == unreal.MovieSceneCameraCutTrack.static_class():
             track = t
             break
     if not track:
-        track = sequence.add_master_track(
-            unreal.MovieSceneCameraCutTrack)
+        track = sequence.add_master_track(unreal.MovieSceneCameraCutTrack)
 
     return sequence, (min_frame, max_frame)
 
@@ -686,9 +686,7 @@ def _get_comps_and_assets(
             components.extend(comps)
     else:
         comps = eas.get_all_level_actors_components()
-        components = [
-            c for c in comps if isinstance(c, component_class)
-        ]
+        components = [c for c in comps if isinstance(c, component_class)]
 
     # Get all the static meshes among the old assets in a dictionary with
     # the name as key
@@ -719,7 +717,7 @@ def replace_static_mesh_actors(old_assets, new_assets, selected):
         unreal.StaticMesh,
         old_assets,
         new_assets,
-        selected
+        selected,
     )
     unreal.log("static_mesh_comps")
     unreal.log(static_mesh_comps)
@@ -730,7 +728,6 @@ def replace_static_mesh_actors(old_assets, new_assets, selected):
     unreal.log("new_meshes")
     unreal.log(old_meshes)
 
-
     for old_name, old_mesh in old_meshes.items():
         new_mesh = new_meshes.get(old_name)
 
@@ -738,7 +735,8 @@ def replace_static_mesh_actors(old_assets, new_assets, selected):
             continue
 
         smes.replace_mesh_components_meshes(
-            static_mesh_comps, old_mesh, new_mesh)
+            static_mesh_comps, old_mesh, new_mesh
+        )
 
 
 def replace_skeletal_mesh_actors(old_assets, new_assets, selected):
@@ -747,7 +745,7 @@ def replace_skeletal_mesh_actors(old_assets, new_assets, selected):
         unreal.SkeletalMesh,
         old_assets,
         new_assets,
-        selected
+        selected,
     )
 
     for old_name, old_mesh in old_meshes.items():
@@ -767,7 +765,7 @@ def replace_geometry_cache_actors(old_assets, new_assets, selected):
         unreal.GeometryCache,
         old_assets,
         new_assets,
-        selected
+        selected,
     )
 
     for old_name, old_mesh in old_caches.items():
@@ -795,15 +793,17 @@ def delete_asset_if_unused(container, asset_content):
                 include_hard_package_references=True,
                 include_searchable_names=False,
                 include_soft_management_references=False,
-                include_hard_management_references=False
-            ))
+                include_hard_management_references=False,
+            ),
+        )
         if not refs:
             continue
         references = references.union(set(refs))
 
     # Filter out references that are in the Temp folder
     cleaned_references = {
-        ref for ref in references if not str(ref).startswith("/Temp/")}
+        ref for ref in references if not str(ref).startswith("/Temp/")
+    }
 
     # Check which of the references are Levels
     for ref in cleaned_references:
@@ -876,7 +876,10 @@ def format_asset_directory(context, directory_template):
         data["version"]["version"] = f"v{version:03d}"
     asset_name_with_version = set_asset_name(data)
     asset_dir = StringTemplate(directory_template).format_strict(data)
-    return f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{asset_dir}", asset_name_with_version
+    return (
+        f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{asset_dir}",
+        asset_name_with_version,
+    )
 
 
 def set_asset_name(data):
@@ -890,7 +893,7 @@ def set_asset_name(data):
     Returns:
         str: asset name
     """
-    asset_name = None,
+    asset_name = (None,)
     name = data["product"]["name"]
     version = data["version"]["version"]
     folder_name = data["folder"]["name"]
@@ -899,7 +902,8 @@ def set_asset_name(data):
         asset_name = name
     elif folder_name:
         asset_name = "{}_{}_{}_{}".format(
-            folder_name, name, version, extension)
+            folder_name, name, version, extension
+        )
     else:
         asset_name = "{}_{}_{}".format(name, version, extension)
     return asset_name
@@ -923,14 +927,13 @@ def get_sequence(files):
 
     """
     collections, _remainder = clique.assemble(
-        files,
-        patterns=[clique.PATTERNS["frames"]],
-        minimum_items=1)
+        files, patterns=[clique.PATTERNS["frames"]], minimum_items=1
+    )
 
     if len(collections) > 1:
         raise ValueError(
-            f"Multiple collections found for {collections}. "
-            "This is a bug.")
+            f"Multiple collections found for {collections}. This is a bug."
+        )
 
     return [os.path.basename(filename) for filename in collections[0]]
 
@@ -953,12 +956,14 @@ def find_camera_actors_in_camera_tracks(sequence) -> list[Any]:
             for section in sections:
                 binding_id = section.get_camera_binding_id()
                 bound_objects = unreal.LevelSequenceEditorBlueprintLibrary.get_bound_objects(
-                    binding_id)
+                    binding_id
+                )
                 for camera_object in bound_objects:
                     camera_objects.append(camera_object.get_path_name())
-    world =  unreal.EditorLevelLibrary.get_editor_world()
+    world = unreal.EditorLevelLibrary.get_editor_world()
     sel_actors = unreal.GameplayStatics().get_all_actors_of_class(
-        world, unreal.CameraActor)
+        world, unreal.CameraActor
+    )
     actors = [a for a in sel_actors if a.get_path_name() in camera_objects]
     return actors
 
@@ -1012,11 +1017,13 @@ def get_frame_range_from_folder_attributes(folder_entity=None):
     folder_attributes = folder_entity["attrib"]
     frame_start = (
         int(folder_attributes.get("frameStart"))
-        if folder_attributes.get("frameStart") else 1
+        if folder_attributes.get("frameStart")
+        else 1
     )
     frame_end = (
         int(folder_attributes.get("frameEnd"))
-        if folder_attributes.get("frameEnd") else 1
+        if folder_attributes.get("frameEnd")
+        else 1
     )
     return frame_start, frame_end
 
@@ -1030,18 +1037,25 @@ def has_asset_existing_directory(asset_name, asset_dir):
         str: package path
     """
     asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
-    all_assets = asset_registry.get_assets_by_path(f'{CONTENT_STORAGE_ROOT}', recursive=True)
+    all_assets = asset_registry.get_assets_by_path(
+        f"{CONTENT_STORAGE_ROOT}", recursive=True
+    )
     for game_asset in all_assets:
         if game_asset.asset_name == asset_name:
             asset_path = game_asset.get_asset().get_path_name()
             existing_asset_dir = unreal.Paths.split(asset_path)[0]
             existing_version_folder = existing_asset_dir.split("/")[-1]
-            existing_asset_dir = existing_asset_dir.replace(existing_version_folder, "")
+            existing_asset_dir = existing_asset_dir.replace(
+                existing_version_folder, ""
+            )
             if existing_asset_dir != asset_dir:
                 return asset_path
     return None
 
-def has_asset_directory_pattern_matched(asset_name, asset_dir, name, extension=None):
+
+def has_asset_directory_pattern_matched(
+    asset_name, asset_dir, name, extension=None
+):
     version_folder = asset_dir.split("/")[-1]
     target_asset_dir = asset_dir.replace(version_folder, "")
     asset_path = has_asset_existing_directory(asset_name, target_asset_dir)
@@ -1054,7 +1068,9 @@ def has_asset_directory_pattern_matched(asset_name, asset_dir, name, extension=N
     if extension:
         pattern = rf"{name}_v\d{{3}}_{extension}"
     is_version_folder_matched = re.match(pattern, version_folder)
-    is_existing_version_folder_matched = re.match(pattern, existing_version_folder)
+    is_existing_version_folder_matched = re.match(
+        pattern, existing_version_folder
+    )
     if not is_version_folder_matched or not is_existing_version_folder_matched:
         return asset_path
 
@@ -1073,15 +1089,21 @@ def get_top_hierarchy_folder(path):
     # Split the path by the directory separator '/'
     path = path.replace(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/", "")
     # Return the first part
-    parts = [part for part in path.split('/') if part]
+    parts = [part for part in path.split("/") if part]
     return parts[0]
 
 
-def generate_hierarchy_path(name, folder_name, asset_root, master_dir_name, suffix=""):
+def generate_hierarchy_path(
+    name, folder_name, asset_root, master_dir_name, suffix=""
+):
     asset_name = f"{folder_name}_{name}" if folder_name else name
-    hierarchy_dir = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{master_dir_name}"
+    hierarchy_dir = (
+        f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/{master_dir_name}"
+    )
     tools = unreal.AssetToolsHelpers().get_asset_tools()
-    asset_dir, container_name = tools.create_unique_asset_name(asset_root, suffix=suffix)
+    asset_dir, container_name = tools.create_unique_asset_name(
+        asset_root, suffix=suffix
+    )
     suffix = "_CON"
     container_name += suffix
     if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
@@ -1091,10 +1113,12 @@ def generate_hierarchy_path(name, folder_name, asset_root, master_dir_name, suff
 
 
 def remove_map_and_sequence(container):
-    asset_dir = container.get('namespace')
+    asset_dir = container.get("namespace")
     # Create a temporary level to delete the layout level.
     unreal.EditorLevelLibrary.save_all_dirty_levels()
-    unreal.EditorAssetLibrary.make_directory(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp")
+    unreal.EditorAssetLibrary.make_directory(
+        f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp"
+    )
     tmp_level = f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp/temp_map"
     if not unreal.EditorAssetLibrary.does_asset_exist(f"{tmp_level}.temp_map"):
         unreal.EditorLevelLibrary.new_level(tmp_level)
@@ -1107,33 +1131,34 @@ def remove_map_and_sequence(container):
     # Load the default level
     default_level_path = "/Engine/Maps/Templates/OpenWorld"
     unreal.EditorLevelLibrary.load_level(default_level_path)
-    unreal.EditorAssetLibrary.delete_directory(f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp")
+    unreal.EditorAssetLibrary.delete_directory(
+        f"{CONTENT_STORAGE_ROOT}/{CONTENT_STORAGE_PATH}/tmp"
+    )
 
 
 def update_container(container, repre_entity, loaded_assets=None):
-    asset_dir = container.get('namespace')
+    asset_dir = container.get("namespace")
     data = {
         "representation": repre_entity["id"],
         "parent": repre_entity["versionId"],
     }
     if loaded_assets is not None:
         data["loaded_assets"] = loaded_assets
-    imprint(
-        "{}/{}".format(
-            asset_dir,
-            container.get('container_name')),
-            data
-    )
+    imprint("{}/{}".format(asset_dir, container.get("container_name")), data)
 
 
-def generate_master_level_sequence(tools, asset_dir, asset_name,
-                                   hierarchy_dir, master_dir_name,
-                                   suffix=""):
+def generate_master_level_sequence(
+    tools, asset_dir, asset_name, hierarchy_dir, master_dir_name, suffix=""
+):
     # Create map for the shot, and create hierarchy of map. If the maps
     # already exist, we will use them.
-    master_level = f"{hierarchy_dir}/{master_dir_name}_map.{master_dir_name}_map"
+    master_level = (
+        f"{hierarchy_dir}/{master_dir_name}_map.{master_dir_name}_map"
+    )
     if not unreal.EditorAssetLibrary.does_asset_exist(master_level):
-        unreal.EditorLevelLibrary.new_level(f"{hierarchy_dir}/{master_dir_name}_map")
+        unreal.EditorLevelLibrary.new_level(
+            f"{hierarchy_dir}/{master_dir_name}_map"
+        )
 
     asset_level = f"{asset_dir}/{asset_name}_map.{asset_name}_map"
     if suffix:
@@ -1148,37 +1173,43 @@ def generate_master_level_sequence(tools, asset_dir, asset_name,
         unreal.EditorLevelUtils.add_level_to_world(
             unreal.EditorLevelLibrary.get_editor_world(),
             asset_level,
-            unreal.LevelStreamingDynamic
+            unreal.LevelStreamingDynamic,
         )
     sequences = []
     frame_ranges = []
     root_content = unreal.EditorAssetLibrary.list_assets(
-        hierarchy_dir, recursive=False, include_folder=False)
+        hierarchy_dir, recursive=False, include_folder=False
+    )
 
     existing_sequences = [
         unreal.EditorAssetLibrary.find_asset_data(asset)
         for asset in root_content
-        if unreal.EditorAssetLibrary.find_asset_data(
-            asset).get_class().get_name() == 'LevelSequence'
+        if unreal.EditorAssetLibrary.find_asset_data(asset)
+        .get_class()
+        .get_name()
+        == "LevelSequence"
     ]
 
     if not existing_sequences:
-        sequence, frame_range = generate_sequence(master_dir_name, hierarchy_dir)
+        sequence, frame_range = generate_sequence(
+            master_dir_name, hierarchy_dir
+        )
 
         sequences.append(sequence)
         frame_ranges.append(frame_range)
     else:
         for e in existing_sequences:
             sequences.append(e.get_asset())
-            frame_ranges.append((
-                e.get_asset().get_playback_start(),
-                e.get_asset().get_playback_end()))
+            frame_ranges.append(
+                (
+                    e.get_asset().get_playback_start(),
+                    e.get_asset().get_playback_end(),
+                )
+            )
 
     shot_name = f"{asset_dir}/{asset_name}.{asset_name}"
     if suffix:
-        shot_name = (
-            f"{asset_dir}/{asset_name}_{suffix}.{asset_name}_{suffix}"
-        )
+        shot_name = f"{asset_dir}/{asset_name}_{suffix}.{asset_name}_{suffix}"
 
     shot = None
     if not unreal.EditorAssetLibrary.does_asset_exist(shot_name):
@@ -1186,7 +1217,7 @@ def generate_master_level_sequence(tools, asset_dir, asset_name,
             asset_name=asset_name if not suffix else f"{asset_name}_{suffix}",
             package_path=asset_dir,
             asset_class=unreal.LevelSequence,
-            factory=unreal.LevelSequenceFactoryNew()
+            factory=unreal.LevelSequenceFactoryNew(),
         )
     else:
         shot = unreal.load_asset(shot_name)
@@ -1194,9 +1225,12 @@ def generate_master_level_sequence(tools, asset_dir, asset_name,
     # sequences and frame_ranges have the same length
     for i in range(0, len(sequences) - 1):
         set_sequence_hierarchy(
-            sequences[i], sequences[i + 1],
+            sequences[i],
+            sequences[i + 1],
             frame_ranges[i][1],
-            frame_ranges[i + 1][0], frame_ranges[i + 1][1],
-            [asset_level])
+            frame_ranges[i + 1][0],
+            frame_ranges[i + 1][1],
+            [asset_level],
+        )
 
     return shot, master_level, asset_level, sequences, frame_ranges
