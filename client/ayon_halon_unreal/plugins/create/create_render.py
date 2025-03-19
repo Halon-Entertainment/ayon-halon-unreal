@@ -9,7 +9,7 @@ from ayon_halon_unreal.api.pipeline import (
     get_subsequences,
     anatomy,
     context_tools,
-    IMPORT_STORAGE_PATH
+    CONTENT_STORAGE_ROOT
 )
 from ayon_halon_unreal.api.plugin import (
     UnrealAssetCreator
@@ -54,7 +54,7 @@ class CreateRender(UnrealAssetCreator):
         # If the option to create a new level sequence is selected,
         # create a new level sequence and a master level.
 
-        root = f"{IMPORT_STORAGE_PATH}/{context_tools.get_project_settings(anatomy.Anatomy().project_name)['unreal']['sequence_import_root']}"
+        root = f"{CONTENT_STORAGE_ROOT}/{context_tools.get_project_settings(anatomy.Anatomy().project_name)['unreal']['sequence_import_root']}"
 
         # Create a new folder for the sequence in root
         sequence_dir_name = create_folder(root, product_name)
