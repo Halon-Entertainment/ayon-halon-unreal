@@ -5,10 +5,13 @@ from ayon_core import (
     resources,
     style
 )
+from ayon_core.lib.log import Logger
 from ayon_core.tools.utils import host_tools
 from ayon_core.tools.utils.lib import qt_app_context
 from ayon_halon_unreal.api import rendering
 from ayon_halon_unreal.api import hierarchy
+
+log = Logger.get_logger(__name__)
 
 
 class ToolsBtnsWidget(QtWidgets.QWidget):
@@ -104,7 +107,7 @@ class ToolsDialog(QtWidgets.QDialog):
             self._first_show = False
 
     def _on_tool_require(self, tool_name):
-        print(f"on tool require: {self}, {tool_name}")
+        log.debug(f"on tool require: {self}, {tool_name}")
         host_tools.show_tool_by_name(tool_name, parent=self)
 
 

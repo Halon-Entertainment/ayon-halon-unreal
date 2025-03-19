@@ -35,7 +35,6 @@ class AyonHalonUnreal(AYONAddon, IHostAddon):
         )
         env["ENV_SET"] = "True"
         os.environ.update(env)
-        pass
 
     def get_global_environments(self):
         return {

@@ -23,24 +23,24 @@ class AyonMetaData:
 
     def first_or_create(self) -> bool:
         if not unreal.EditorAssetLibrary.does_asset_exist(f"{self.base_path}/{self.asset_name}"):
-            asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-
-            blue_print_factory = unreal.BlueprintFactory()
-            blue_print_factory.set_editor_property(
-                "ParentClass", unreal.PrimaryDataAsset
-            )
-
-            new_blueprint = asset_tools.create_asset(
-                self.asset_name,
-                self.base_path,
-                None,
-                blue_print_factory,
-            )
-
-            unreal.EditorAssetLibrary.save_loaded_asset(new_blueprint)
-            self.file_path = unreal.SystemLibrary.get_system_path(
-                new_blueprint
-            )
-            return False
-        else:
             return True
+
+        asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+
+        blue_print_factory = unreal.BlueprintFactory()
+        blue_print_factory.set_editor_property(
+            "ParentClass", unreal.PrimaryDataAsset
+        )
+
+        new_blueprint = asset_tools.create_asset(
+            self.asset_name,
+            self.base_path,
+            None,
+            blue_print_factory,
+        )
+
+        unreal.EditorAssetLibrary.save_loaded_asset(new_blueprint)
+        self.file_path = unreal.SystemLibrary.get_system_path(
+            new_blueprint
+        )
+        return False
