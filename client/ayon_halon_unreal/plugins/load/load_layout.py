@@ -28,7 +28,7 @@ from ayon_halon_unreal.api.pipeline import (
     generate_hierarchy_path,
     update_container,
     remove_map_and_sequence,
-    IMPORT_STORAGE_PATH
+    CONTENT_STORAGE_ROOT
 )
 from ayon_halon_unreal.api.lib import (
     import_animation
@@ -375,7 +375,7 @@ class LayoutLoader(plugin.LayoutLoader):
         hierarchy_dir = container.get("master_directory", "")
         if not hierarchy_dir:
             master_dir_name = get_top_hierarchy_folder(asset_dir)
-            hierarchy_dir = f"{IMPORT_STORAGE_PATH}/{master_dir_name}"
+            hierarchy_dir = f"{CONTENT_STORAGE_ROOT}/{master_dir_name}"
         if create_sequences:
             master_level = f"{hierarchy_dir}/{master_dir_name}_map.{master_dir_name}_map"
             filter = unreal.ARFilter(
@@ -456,9 +456,9 @@ class LayoutLoader(plugin.LayoutLoader):
             # find the level sequence.
             master_directory = container.get("master_directory", "")
             if not master_directory:
-                namespace = container.get('namespace').replace(f"{IMPORT_STORAGE_PATH}/", "")
+                namespace = container.get('namespace').replace(f"{CONTENT_STORAGE_ROOT}/", "")
                 ms_asset = namespace.split('/')[0]
-                master_directory = f"{IMPORT_STORAGE_PATH}/{ms_asset}"
+                master_directory = f"{CONTENT_STORAGE_ROOT}/{ms_asset}"
             ar = unreal.AssetRegistryHelpers.get_asset_registry()
             _filter = unreal.ARFilter(
                 class_names=["LevelSequence"],

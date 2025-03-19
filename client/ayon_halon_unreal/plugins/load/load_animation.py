@@ -25,7 +25,7 @@ class AnimationFBXLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    root = unreal_pipeline.IMPORT_STORAGE_PATH
+    root = unreal_pipeline.CONTENT_STORAGE_ROOT
     loaded_asset_dir = "{folder[path]}/{product[name]}_{version[version]}"
     show_dialog = False
 

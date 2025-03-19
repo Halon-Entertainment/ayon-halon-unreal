@@ -37,7 +37,7 @@ class SkeletalMeshFBXLoader(plugin.Loader):
                     "loaded_asset_dir", cls.loaded_asset_dir)
         # Apply import settings
         import_settings = (
-            project_settings.get("unreal", {}).get("import_settings", {})
+            project_settings.get("ayon_halon_unreal", {}).get("import_settings", {})
         )
         cls.show_dialog = import_settings.get("show_dialog", cls.show_dialog)
 
