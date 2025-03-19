@@ -23,13 +23,17 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
 
         load_btn = QtWidgets.QPushButton("Load...", self)
         publish_btn = QtWidgets.QPushButton("Publisher...", self)
+        publish_btn.setHidden(True)
         manage_btn = QtWidgets.QPushButton("Manage...", self)
         render_btn = QtWidgets.QPushButton("Render...", self)
+        render_btn.setHidden(True)
         sequence_btn = QtWidgets.QPushButton(
             "Build sequence hierarchy...", self)
+        sequence_btn.setHidden(True)
         experimental_tools_btn = QtWidgets.QPushButton(
             "Experimental tools...", self
         )
+        experimental_tools_btn.setHidden(True)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
