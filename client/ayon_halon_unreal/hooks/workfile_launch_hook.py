@@ -3,7 +3,8 @@ import pathlib
 from ayon_applications import (ApplicationLaunchFailed, LaunchTypes,
                                PreLaunchHook)
 from ayon_core.pipeline.anatomy.anatomy import Anatomy
-
+from ayon_core.settings import get_project_settings
+import os
 
 class UnrealPrelaunchHook(PreLaunchHook):
     """Hook to handle launching Unreal.
@@ -32,7 +33,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
     def execute(self):
         """Hook entry method."""
-        project_settings = self.data["project_settings"]
+        project_name = self.data["project_name"]
+        project_settings = get_project_settings(project_name)
+
+
         unreal_settings = project_settings["ayon_halon_unreal"]
         if not unreal_settings["enabled"]:
             return

@@ -9,7 +9,7 @@ class UnrealSettings(BaseSettingsModel):
         scope=['studio', 'project']
     )
     uproject_file_path: str = SettingsField(
-        "{root[work]}/unreal/{project[name].uproject",
+        "{root[work]}/unreal/{project[name]}.uproject",
         scope=['studio', 'project'],
         title="UProject File Path",
         description="Templated file path to find the uproject file at launch."
