@@ -22,7 +22,13 @@ class AyonMetaData:
         return self
 
     def first_or_create(self) -> bool:
-        if not unreal.EditorAssetLibrary.does_asset_exist(f"{self.base_path}/{self.asset_name}"):
+        asset_path = f"{self.base_path}{self.asset_name}"
+        asset_exists = unreal.EditorAssetLibrary.does_asset_exist(asset_path)
+
+        log.debug(f"Asset Path: {asset_path}")
+        log.debug(f"Asset Exists: {asset_exists}")
+
+        if asset_exists:
             return True
 
         asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
