@@ -38,7 +38,10 @@ logger = logging.getLogger("ayon_core.hosts.unreal")
 AYON_CONTAINERS = "AyonContainers"
 AYON_ASSET_DIR = f"/Ayon"
 CONTEXT_CONTAINER = "Ayon/context.json"
-UNREAL_VERSION = None
+
+UNREAL_VERSION = semver.VersionInfo(
+    *os.getenv("AYON_UNREAL_VERSION").split(".")
+)
 
 AYON_PROJECT_NAME = anatomy.Anatomy().project_name
 UNREAL_PROJECT_CONFIG = ayon_api.get_addons_project_settings(

@@ -157,6 +157,9 @@ class AnimationFBXLoader(plugin.Loader):
                 raise LoadError(f"Could not find actor {instance_name}")
             skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
 
+        if loaded_options:
+            skeleton = loaded_options.get('skeleton')
+
         if not actor:
             return None
 
