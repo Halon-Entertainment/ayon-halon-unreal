@@ -7,7 +7,7 @@ def init_ayon_menu():
     section_name = "halon_ayon_section"
     command = (
         "from ayon_halon_unreal.api import tools_ui;"
-        "tools_ui.show_tools_dialog()"
+        "tools_ui.show_tools_popup()"
     )
 
     level_menu_bar = menus.find_menu(
