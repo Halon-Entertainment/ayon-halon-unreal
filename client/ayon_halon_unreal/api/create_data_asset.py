@@ -46,7 +46,5 @@ class AyonMetaData:
         )
 
         unreal.EditorAssetLibrary.save_loaded_asset(new_blueprint)
-        self.file_path = unreal.SystemLibrary.get_system_path(
-            new_blueprint
-        )
+        self.file_path = unreal.SystemLibrary.get_system_path(new_blueprint)
         return False

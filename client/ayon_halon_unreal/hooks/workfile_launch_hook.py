@@ -23,13 +23,6 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         self.signature = f"( {self.__class__.__name__} )"
 
-    def _get_work_filename(self):
-        # Use last workfile if was found
-        if self.data.get("last_workfile_path"):
-            last_workfile = Path(self.data.get("last_workfile_path"))
-            if last_workfile and last_workfile.exists():
-                return last_workfile.name
-
     def execute(self):
         """Hook entry method."""
         project_settings = self.data["project_settings"]
@@ -37,11 +30,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         if not unreal_settings["enabled"]:
             return
 
-        workdir = self.launch_context.env["AYON_WORKDIR"]
         executable = str(self.launch_context.executable)
-        self.log.debug(
-            f"Launching Unreal, Workdir: {workdir}, Exec: {executable}"
-        )
 
         project_name = self.launch_context.data["project_name"]
         anatomy = Anatomy(project_name)
@@ -61,3 +50,5 @@ class UnrealPrelaunchHook(PreLaunchHook):
         self.log.debug(
             f"{self.launch_context.executable} {self.launch_context.launch_args[0]}"
         )
+        engine_version = self.app_name.split("/")[-1].replace("-", ".")
+        self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version

@@ -83,6 +83,12 @@ class AnimationFBXLoader(plugin.Loader):
         skeleton, automated, replace=False,
         loaded_options=None
     ):
+        print(f"Import Animation {path}")
+        print(f"Import Animation {skeleton}")
+        print(f"Import Animation {dir(skeleton)}")
+        import traceback
+        traceback.print_stack()
+
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
 
@@ -92,7 +98,7 @@ class AnimationFBXLoader(plugin.Loader):
         task.set_editor_property('destination_path', asset_dir)
         task.set_editor_property('destination_name', asset_name)
         task.set_editor_property('replace_existing', replace)
-        task.set_editor_property('automated', not cls.show_dialog)
+        task.set_editor_property('automated', True)
         task.set_editor_property('save', False)
 
         # set import options here
@@ -105,7 +111,8 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.set_editor_property('import_mesh', False)
         task.options.set_editor_property('import_animations', True)
         task.options.set_editor_property('override_full_name', True)
-        task.options.set_editor_property('skeleton', skeleton)
+        print(f"Using Skeleton {skeleton}")
+        task.options.skeleton = skeleton
         task.options.anim_sequence_import_data.set_editor_property(
             'animation_length',
             unreal.FBXAnimationLengthImportType.FBXALIT_SET_RANGE
@@ -141,6 +148,8 @@ class AnimationFBXLoader(plugin.Loader):
         automated = False
         actor = None
 
+        print("------ Running _process ------")
+
         if instance_name:
             automated = True
             # Old method to get the actor
@@ -157,9 +166,15 @@ class AnimationFBXLoader(plugin.Loader):
                 raise LoadError(f"Could not find actor {instance_name}")
             skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
 
+        # if loaded_options:
+        #     skeleton = loaded_options.get('skeleton')
+
+        print(f"This is the Skeleton {skeleton}")
+
         if not actor:
             return None
 
+        print("------- Start Import Animation ------")
         self._import_animation(
             path, asset_dir, asset_name,
             skeleton, automated, loaded_options=loaded_options)
@@ -299,7 +314,11 @@ class AnimationFBXLoader(plugin.Loader):
         if not self.is_skeleton(skeleton):
             raise LoadError("Selected asset is not a skeleton.")
 
-        self.log.info(f"Using skeleton: {skeleton.get_name()}")
+        if loaded_options and loaded_options.get('skeleton'):
+            skeleton = loaded_options['skeleton']
+
+        print(f"Using skeleton: {skeleton.get_name()}")
+
         self._import_animation(
             path, asset_dir, asset_name,
             skeleton, True, loaded_options=loaded_options)
@@ -424,7 +443,8 @@ class AnimationFBXLoader(plugin.Loader):
             EditorAssetLibrary.make_directory(asset_dir)
         loaded_options = {
             "frameStart": folder_entity["attrib"]["frameStart"],
-            "frameEnd": folder_entity["attrib"]["frameEnd"]
+            "frameEnd": folder_entity["attrib"]["frameEnd"],
+            "skeleton": options['skeleton']
         }
         master_level = self._import_animation_with_json(
             path, context, hierarchy,
