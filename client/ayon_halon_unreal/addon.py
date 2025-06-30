@@ -42,7 +42,7 @@ class AyonHalonUnreal(AYONAddon, IHostAddon):
         }
 
     def get_launch_hook_paths(self, app):
-        return [os.path.join(UNREAL_ADDON_ROOT, "hooks")]
+        return [os.path.join(UNREAL_ADDON_ROOT, "launch_hooks")]
 
     def add_implementation_envs(self, env, app):
         env = {
